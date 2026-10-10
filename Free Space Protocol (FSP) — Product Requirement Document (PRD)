@@ -1,0 +1,29 @@
+1. System Architecture Overview
+                      +-------------------------------+
+                      |        React Native Client    |
+                      |   (iOS / Android / Web PWA)   |
+                      +---------------+---------------+
+                                      |
+                                  HTTPS / WSS
+                                      |
+                      +---------------+---------------+
+                      |         Node.js / Go API      |
+                      |    (REST + GraphQL + WebSockets)|
+                      +---------------+---------------+
+                                      |
+         +----------------------------+----------------------------+
+         |                            |                            |
+         v                            v                            v
++------------------+         +-------------------+       +-------------------+
+|  PostgreSQL      |         |  Qdrant / Pinecone|       |  Libp2p / IPFS    |
+|  (PostGIS Engine)|         |  (Vector Database)|       |  (Decentralized)  |
++------------------+         +-------------------+       +-------------------+
+Frontend: React Native (Expo) with Tailwind CSS (NativeWind) for iOS, Android, and Web.
+
+Backend: Node.js (TypeScript) or Go running REST/GraphQL and WebSocket connections for real-time messaging.
+
+Database & Geospatial: PostgreSQL with PostGIS extension for geo-fenced spatial searches.
+
+Vector Search Engine: Qdrant or Pinecone for AI-assisted product-to-capability matching.
+
+Mutual Credit Engine: Immutable double-entry ledger database (event-sourced).
