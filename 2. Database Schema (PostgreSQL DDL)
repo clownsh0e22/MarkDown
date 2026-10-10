@@ -1,0 +1,60 @@
+-- Enable PostGIS extension for geo-spatial queries
+CREATE EXTENSION IF NOT EXISTS postgis;
+
+-- Enum Types
+CREATE TYPE user_role AS ENUM ('consumer', 'maker', 'farmer', 'service_provider');
+CREATE TYPE intent_status AS ENUM ('open', 'matched', 'fulfilled', 'cancelled');
+CREATE TYPE transaction_status AS ENUM ('pending', 'settled', 'disputed');
+
+-- Users & Profiles Table
+CREATE TABLE users (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    username VARCHAR(50) UNIQUE NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    role user_role[] NOT NULL DEFAULT '{consumer}',
+    location GEOGRAPHY(POINT, 4326) NOT NULL,
+    reputation_score DECIMAL(3, 2) DEFAULT 5.00,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Maker Capabilities (3D printers, CNC, Assembly, Agriculture)
+CREATE TABLE capabilities (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    maker_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    title VARCHAR(100) NOT NULL,
+    description TEXT,
+    tags TEXT[] NOT NULL, -- e.g., {'3d-printing', 'open-hardware', 'organic-produce'}
+    max_service_radius_km INT DEFAULT 25,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Consumer Requests / Intent Interceptions
+CREATE TABLE product_intents (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    consumer_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    target_url TEXT, -- e.g., URL to corporate retail product
+    raw_query TEXT NOT NULL, -- e.g., "Wooden dining chair" or "iPhone replacement screen"
+    embedding vector(1536), -- Vector representation for semantic search
+    delivery_location GEOGRAPHY(POINT, 4326) NOT NULL,
+    status intent_status DEFAULT 'open',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Mutual Credit Ledger (Double-Entry Bookkeeping)
+CREATE TABLE credit_accounts (
+    user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    credit_balance DECIMAL(12, 2) DEFAULT 0.00,
+    credit_limit DECIMAL(12, 2) DEFAULT -500.00, -- Maximum allowed negative credit (trust line)
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE credit_transactions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    sender_id UUID REFERENCES users(id),
+    receiver_id UUID REFERENCES users(id),
+    amount DECIMAL(12, 2) NOT NULL CHECK (amount > 0),
+    description TEXT NOT NULL,
+    status transaction_status DEFAULT 'pending',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
