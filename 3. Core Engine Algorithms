@@ -1,0 +1,43 @@
+A. Geo-Spatial Capability Matching Query (PostgreSQL / PostGIS)
+When a consumer requests a item, the system finds local makers within their capability radius:
+SELECT 
+    c.id AS capability_id,
+    u.id AS maker_id,
+    u.username,
+    c.title,
+    ST_Distance(u.location, $1) / 1000 AS distance_km
+FROM capabilities c
+JOIN users u ON c.maker_id = u.id
+WHERE 
+    c.is_active = TRUE
+    AND c.tags && $2 -- Overlaps with requested capability tags
+    AND ST_DWithin(u.location, $1, c.max_service_radius_km * 1000)
+ORDER BY distance_km ASC;
+B. Mutual Credit Settlement LogicIn a mutual credit clearing system, total platform supply equals zero ($\sum \text{Balances} = 0$).
+interface TransactionRequest {
+  senderId: string;
+  receiverId: string;
+  amount: number;
+  description: string;
+}
+
+async function processCreditTransfer(tx: TransactionRequest, db: DatabaseTransaction) {
+  // 1. Fetch Sender Account
+  const sender = await db.query('SELECT credit_balance, credit_limit FROM credit_accounts WHERE user_id = $1', [tx.senderId]);
+  
+  // 2. Validate Trust Line Limit
+  const newSenderBalance = sender.credit_balance - tx.amount;
+  if (newSenderBalance < sender.credit_limit) {
+    throw new Error("Transaction rejected: Credit limit exceeded.");
+  }
+
+  // 3. Execute Double-Entry Ledger Update
+  await db.query('UPDATE credit_accounts SET credit_balance = credit_balance - $1 WHERE user_id = $2', [tx.amount, tx.senderId]);
+  await db.query('UPDATE credit_accounts SET credit_balance = credit_balance + $1 WHERE user_id = $2', [tx.amount, tx.receiverId]);
+
+  // 4. Record Immutable Ledger Event
+  await db.query(
+    'INSERT INTO credit_transactions (sender_id, receiver_id, amount, description, status) VALUES ($1, $2, $3, $4, $5)',
+    [tx.senderId, tx.receiverId, tx.amount, tx.description, 'settled']
+  );
+}
