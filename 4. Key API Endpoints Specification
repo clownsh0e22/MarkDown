@@ -1,0 +1,6 @@
+Method	Endpoint	Description	Payload / Parameters
+POST	/api/v1/intents	Intercept product search/URL & search local makers	{ "url": "string", "query": "string", "lat": float, "lng": float }
+POST	/api/v1/capabilities	Register a micro-producer service	{ "title": "string", "tags": [], "radiusKm": int }
+GET	/api/v1/ledger/balance	Get current mutual credit balance & trust line	Headers: Authorization Bearer <Token>
+POST	/api/v1/ledger/transfer	Pay another user in credits (e.g., Farmer to Mechanic)	{ "receiverId": "uuid", "amount": float, "description": "string" }
+WS	/ws/v1/messaging	P2P encrypted chat between consumer and maker	WebSocket Connection Query: token=<Token>
