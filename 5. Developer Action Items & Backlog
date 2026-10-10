@@ -1,0 +1,15 @@
+Repository Setup: Fork/clone backend repository structure and configure Docker compose for PostgreSQL/PostGIS.
+
+Phase 1 Implementation:
+
+Build URL metadata parser (pulling product title, description, and images from retail web links).
+
+Implement vector search integration to convert raw product descriptions into capability tags.
+
+Construct P2P messaging interface using WebSockets.
+
+Phase 2 Implementation:
+
+Deploy mutual credit ledger engine with transactional locks to prevent double-spending.
+
+Implement automated trust-line scoring based on user reputation and trade history.
